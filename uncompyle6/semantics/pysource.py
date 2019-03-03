@@ -124,6 +124,8 @@ Python.
 #   evaluating the escape code.
 
 import sys
+from types import StringType
+
 IS_PYPY = '__pypy__' in sys.builtin_module_names
 PYTHON3 = (sys.version_info >= (3, 0))
 
@@ -389,9 +391,9 @@ class SourceWalker(GenericASTTraversal, object):
 
         if self.pending_newlines:
             out = out[:-self.pending_newlines]
-        if (isinstance(out, str) and
-             not (PYTHON3 or self.FUTURE_UNICODE_LITERALS)):
-            out = unicode(out, 'utf-8')
+        # if (isinstance(out, str) and
+        #      not (PYTHON3 or self.FUTURE_UNICODE_LITERALS)):
+        #     out = unicode(out, 'utf-8')
         self.f.write(out)
 
     def println(self, *data):
@@ -563,6 +565,20 @@ class SourceWalker(GenericASTTraversal, object):
             self.write(", ")
         self.write(')')
 
+    def repr_str(self, str1):
+        ret = "\'"
+        for c in str1:
+            if c == '\r' or c == '\n' or c == '\\' or c == '\'' or c == '\"' or c == "\t" or c == "\a" \
+                    or c == "\b" or c == "\e" or c == "\v" or c == "\f":
+                t = repr(c)
+
+                ret += "\\" + t.strip("\'\\")
+            else:
+                ret += c
+
+        ret += "\'"
+        return ret
+
     def n_LOAD_CONST(self, node):
         attr = node.attr
         data = node.pattr; datatype = type(data)
@@ -571,6 +587,9 @@ class SourceWalker(GenericASTTraversal, object):
             # before 3.5 and even there it is via a library constant.
             # So we will canonicalize their representation as float('nan') and float('inf')
             self.write("float('%s')" % data)
+        elif datatype is StringType:
+            data = self.repr_str(data)
+            self.write(data)
         elif isinstance(datatype, int) and data == minint:
             # convert to hex, since decimal representation
             # would result in 'LOAD_CONST; UNARY_NEGATIVE'
