@@ -72,7 +72,8 @@ def decompile(
     co_pypy_str = 'PyPy ' if is_pypy else ''
     run_pypy_str = 'PyPy ' if IS_PYPY else ''
     sys_version_lines = sys.version.split('\n')
-    write('# uncompyle6 version %s\n'
+    write('# -*- coding: utf-8 -*-\n'
+          '# uncompyle6 version %s\n'
           '# %sPython bytecode %s%s\n# Decompiled from: %sPython %s' %
           (VERSION, co_pypy_str, bytecode_version,
                " (%s)" % str(magic_int) if magic_int else "",
